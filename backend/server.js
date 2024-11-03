@@ -81,7 +81,6 @@ app.use(cors({
 
 const io = require("socket.io")(server, {
   pingTimeout: 60000,
-  transports: ["websocket"],
   cors: {
     origin: "*",  // This allows all origins
     credentials: true,
