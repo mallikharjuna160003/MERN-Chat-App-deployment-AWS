@@ -74,8 +74,111 @@ Start the Client
 ![](https://github.com/piyush-eon/mern-chat-app/blob/master/screenshots/add%20rem.PNG)
 ### View Other user Profile
 ![](https://github.com/piyush-eon/mern-chat-app/blob/master/screenshots/profile.PNG)
-## Made By
 
-- [@Piyush-eon](https://github.com/piyush-eon)
+# load balancer health check endpoint
 
-  
+```js
+//server.js
+app.get('/health', async (req, res) => {
+  try {
+    const dbState = mongoose.connection.readyState;
+    console.log(dbState);
+    res.status(200).json({
+      status: 'healthy',
+      timestamp: new Date(),
+      database: dbState === 1 ? 'connected' : 'disconnected',
+      service: 'running'
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'unhealthy',
+      error: error.message
+    });
+  }
+});
+
+// for cors
+const io = require("socket.io")(server, {
+  pingTimeout: 60000,
+  transports: ["websocket"],
+  cors: {
+    origin: "*",  // This allows all origins
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type"]
+  },
+});
+
+
+
+```
+
+
+
+# Changes in Backend 
+Updated the Backend DB code
+
+```js
+//config/db.js
+   // Construct the connection string with database name 'chatapp'
+    const conn = await mongoose.connect(`mongodb://${username}:${password}@${endpoint}:${port}/${databaseName}?tls=true&tlsCAFile=./global-bundle.pem&replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false&tlsAllowInvalidHostnames=true&directConnection=true`,{
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      ssl: true,
+      sslValidate: false,
+      connectTimeoutMS: 10000,
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 20000, // Increase the timeout to 20 seconds
+    });
+
+ config/db.js add these in the end.
+
+// Listen for Mongoose connection events
+mongoose.connection.on('connected', () => {
+    console.log('Mongoose connected to DB');
+    dbConnected = true; // Ensure this is set when connected
+});
+
+mongoose.connection.on('disconnected', () => {
+    console.log('Mongoose disconnected from DB');
+    dbConnected = false; // Reset when disconnected
+});
+
+mongoose.connection.on('error', (error) => {
+    console.error(`Mongoose connection error: ${error}`);
+});
+```
+in server.js
+
+```js
+in server.js  below required  for health check
+const mongoose = require("mongoose"); 
+
+```
+# environment variables backend
+```
+PORT=5000
+#MONGO_URI="mongodb://localhost:27017/chatapp"
+JWT_SECRET=piyush
+username=monster
+password=SecretPass123
+CERT_PATH=global-bundle.pem
+DOCDB_ENDPOINT=localhost
+DB_DATABASE=BurgetKings
+```
+
+
+# Testing locally
+register:
+```sh
+curl -X POST http://localhost:5000/api/user -H "Content-Type: application/json" -d '{"name":"test","email": "testuser@example.com", "password": "123456"}'
+
+```
+Login:
+```sh
+curl -X POST http://localhost:5000/api/user/login -H "Content-Type: application/json" -d '{"email": "testuser@example.com", "password": "123456"}'
+```
+
+
+
