@@ -1,4 +1,5 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const connectDB = require("./config/db");
 const dotenv = require("dotenv");
 const userRoutes = require("./routes/userRoutes");
@@ -6,6 +7,7 @@ const chatRoutes = require("./routes/chatRoutes");
 const messageRoutes = require("./routes/messageRoutes");
 const { notFound, errorHandler } = require("./middleware/errorMiddleware");
 const path = require("path");
+const cors = require("cors");
 
 dotenv.config();
 connectDB();
@@ -13,15 +15,35 @@ const app = express();
 
 app.use(express.json()); // to accept json data
 
-// app.get("/", (req, res) => {
-//   res.send("API Running!");
-// });
+app.get("/", (req, res) => {
+   res.send("API Running!");
+});
+
 
 app.use("/api/user", userRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/message", messageRoutes);
 
-/* --------------------------deployment------------------------------
+app.get('/health', async (req, res) => {
+  try {
+    const dbState = mongoose.connection.readyState;
+    console.log(dbState);
+    res.status(200).json({
+      status: 'healthy',
+      timestamp: new Date(),
+      database: dbState === 1 ? 'connected' : 'disconnected',
+      service: 'running'
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'unhealthy',
+      error: error.message
+    });
+  }
+});
+
+/*
+ --------------------------deployment------------------------------
 
 const __dirname1 = path.resolve();
 
@@ -51,13 +73,20 @@ const server = app.listen(
   console.log(`Server running on PORT ${PORT}...`.yellow.bold)
 );
 
+app.use(cors({
+  origin: "*",  // This allows all origins
+  credentials: true
+}));
+
+
 const io = require("socket.io")(server, {
   pingTimeout: 60000,
+  transports: ["websocket"],
   cors: {
-    origin: "*",
+    origin: "*",  // This allows all origins
     credentials: true,
-    methods: "*",
-    allowedHeaders: ["Content-Type"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type"]
   },
 });
 

@@ -10,8 +10,12 @@ COPY package*.json ./
 # Install dependencies
 RUN npm install --legacy-peer-deps
 
+
 # Copy the rest of the application code
 COPY . .
+
+
+#RUN npm test
 
 # Build the application with the legacy OpenSSL provider option
 RUN NODE_OPTIONS=--openssl-legacy-provider npm run build
