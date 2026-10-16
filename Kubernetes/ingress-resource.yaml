@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: my-ingress
+  namespace: default
+  annotations:
+    #nginx.ingress.kubernetes.io/rewrite-target: /
+    ingress.class: "nginx"
+spec:
+  ingressClassName: nginx  # Add this line to specify the ingress class
+  rules:
+  - host: localhost 
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 80
+
+      - path: /api/
+        pathType: Prefix 
+        backend:
+          service:
+            name: backend-service
+            port:
+              number: 5000

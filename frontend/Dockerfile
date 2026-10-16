@@ -24,14 +24,12 @@ RUN NODE_OPTIONS=--openssl-legacy-provider npm run build
 # Use Nginx to serve the app
 FROM nginx:alpine
 
-# Copy the Nginx configuration file
-COPY default.conf /etc/nginx/conf.d/default.conf
 
 # Copy the build files to the Nginx server
 COPY --from=build /usr/src/app/build /usr/share/nginx/html
 
 # Expose the port Nginx is running on
-EXPOSE 80
+EXPOSE 3000
 
 # Start Nginx
 CMD ["nginx", "-g", "daemon off;"]
